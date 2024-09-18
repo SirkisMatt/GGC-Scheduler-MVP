@@ -1,0 +1,75 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Boats {
+  id               Int               @id @default(autoincrement())
+  name             String
+  type             String
+  max_capacity     Int
+  license_required String
+  notes            String?
+  BoatMaintenance  BoatMaintenance[]
+}
+
+model Vehicles {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  type               String
+  max_capacity       Int
+  license_required   String
+  notes              String?
+  VehicleMaintenance VehicleMaintenance[]
+}
+
+model BoatMaintenance {
+  id                         Int      @id @default(autoincrement())
+  boatId                     Int
+  hull_maintenance_due       DateTime
+  usgs_certification         DateTime
+  engine_starboard           String
+  engine_middle              String
+  engine_port                String
+  oil_change_id              Int
+  boat_engine_maintenance_id Int
+  priority_level_id          Int
+
+  boat          Boats               @relation(fields: [boatId], references: [id])
+  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
+  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+}
+
+model VehicleMaintenance {
+  id                Int      @id @default(autoincrement())
+  vehicleId         Int
+  oil_change_id     Int
+  cleaned           DateTime
+  priority_level_id Int
+
+  vehicle       Vehicles            @relation(fields: [vehicleId], references: [id])
+  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
+  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+}
+
+model OilChanges {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  description String
+
+  boat_maintenance    BoatMaintenance[]
+  vehicle_maintenance VehicleMaintenance[]
+}
+
+model MaintenancePriority {
+  id          Int     @id @default(autoincrement())
+  level       String
+  description String?
+
+  boat_maintenance    BoatMaintenance[]
+  vehicle_maintenance VehicleMaintenance[]
+}
