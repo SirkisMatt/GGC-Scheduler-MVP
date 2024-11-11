@@ -7,5 +7,7 @@ module.exports = {
     assetsBuildDirectory: "public/build",
     serverBuildPath: "build/index.js",
     publicPath: "/build/",
+    tailwind: true,
+    postcss: true,
     // Add any other necessary configuration options
   };
