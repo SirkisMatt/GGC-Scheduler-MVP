@@ -7,69 +7,317 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Boats {
-  id               Int               @id @default(autoincrement())
-  name             String
-  type             String
-  max_capacity     Int
-  license_required String
+// Boat Scheduler Models
+model Tour {
+  id          String    @id @default(uuid())
+  tour        String    // Tour code (e.g., WT, DW)
+  ship        String    // Ship name
+  time        String    // Time slot
+  date        DateTime  // Date of tour
+  columnId    String
+  column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  employeeIds String[]  // Array of assigned employee IDs
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  tours     Tour[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Employee Management Models
+model Employee {
+  id                String    @id @default(uuid())
+  firstName         String
+  lastName          String
+  email             String?   @unique
+  phone             String?
+  address           String?
+  emergencyContact  String?
+  emergencyPhone    String?
+  
+  // Employment Details
+  employeeNumber    String?   @unique
+  role             Role      @relation(fields: [roleId], references: [id])
+  roleId           String
+  employmentStatus EmploymentStatus @default(ACTIVE)
+  employmentType   EmploymentType  @default(FULL_TIME)
+  startDate        DateTime
+  endDate          DateTime?
+  
+  // Work Preferences
   notes            String?
-  BoatMaintenance  BoatMaintenance[]
+  cdl              Boolean   @default(false)
+  daysPerWeek      Int
+  availability     String    // JSON array of available days
+  daysOff          String    // JSON array of permanent days off
+  preferredShifts  String?   // JSON array of preferred shift times
+  
+  // Payroll Information
+  quickBooksEmployeeId String?   @unique
+  payRate          Decimal    @default(0.00)
+  payType          PayType    @default(HOURLY)
+  overtimeEligible Boolean    @default(true)
+  taxWithholdings  String?    // JSON object of tax withholding preferences
+  
+  // Benefits
+  benefitsEligible Boolean    @default(false)
+  benefitPlans     EmployeeBenefit[]
+  
+  // Relationships
+  certifications   EmployeeCertification[]
+  schedules        Schedule[]
+  timeEntries      TimeEntry[]
+  payPeriods       PayPeriod[]
+  ratings          EmployeeRating[]
+  documents        EmployeeDocument[]
+  
+  // Audit
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
-model Vehicles {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  type               String
-  max_capacity       Int
-  license_required   String
-  notes              String?
-  VehicleMaintenance VehicleMaintenance[]
+model Role {
+  id           String     @id @default(uuid())
+  name         String     @unique
+  description  String?
+  category     String?    // Guide, Support, Management, etc.
+  employees    Employee[]
+  permissions  String[]   // Array of permission codes
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
-model BoatMaintenance {
-  id                         Int      @id @default(autoincrement())
-  boatId                     Int
-  hull_maintenance_due       DateTime
-  usgs_certification         DateTime
-  engine_starboard           String
-  engine_middle              String
-  engine_port                String
-  oil_change_id              Int
-  boat_engine_maintenance_id Int
-  priority_level_id          Int
-
-  boat          Boats               @relation(fields: [boatId], references: [id])
-  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
-  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+model EmployeeCertification {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        CertificationType @relation(fields: [typeId], references: [id])
+  typeId      String
+  issuedDate  DateTime
+  expiryDate  DateTime?
+  document    String?   // Document URL/path
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model VehicleMaintenance {
-  id                Int      @id @default(autoincrement())
-  vehicleId         Int
-  oil_change_id     Int
-  cleaned           DateTime
-  priority_level_id Int
-
-  vehicle       Vehicles            @relation(fields: [vehicleId], references: [id])
-  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
-  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+model CertificationType {
+  id            String    @id @default(uuid())
+  code          String    @unique  // e.g., CDL, WRT, PG
+  name          String    
+  description   String?
+  validity      Int?      // Validity period in months
+  certifications EmployeeCertification[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
-model OilChanges {
-  id          Int      @id @default(autoincrement())
+// Schedule Management
+model Schedule {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
   date        DateTime
-  description String
-
-  boat_maintenance    BoatMaintenance[]
-  vehicle_maintenance VehicleMaintenance[]
+  startTime   DateTime
+  endTime     DateTime
+  activityId  String
+  activity    Activity  @relation(fields: [activityId], references: [id])
+  notes       String?
+  status      ScheduleStatus @default(SCHEDULED)
+  timeEntry   TimeEntry?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-model MaintenancePriority {
-  id          Int     @id @default(autoincrement())
-  level       String
+model Activity {
+  id          String    @id @default(uuid())
+  code        String    @unique  // WRT, PG, etc.
+  name        String
   description String?
+  category    String    // Water, Land, etc.
+  duration    Int       // Default duration in minutes
+  schedules   Schedule[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
 
-  boat_maintenance    BoatMaintenance[]
-  vehicle_maintenance VehicleMaintenance[]
+// Time Tracking & Payroll
+model TimeEntry {
+  id              String    @id @default(uuid())
+  employeeId      String
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+  scheduleId      String?   @unique
+  schedule        Schedule? @relation(fields: [scheduleId], references: [id])
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime
+  breakDuration   Int       @default(0)  // In minutes
+  regularHours    Decimal   @default(0)
+  overtimeHours   Decimal   @default(0)
+  notes           String?
+  status          TimeEntryStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  syncedToQB      Boolean   @default(false)
+  quickBooksTimeEntryId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model PayPeriod {
+  id              String    @id @default(uuid())
+  employeeId      String
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  status          PayPeriodStatus @default(DRAFT)
+  regularHours    Decimal   @default(0)
+  overtimeHours   Decimal   @default(0)
+  grossPay        Decimal   @default(0)
+  netPay          Decimal   @default(0)
+  deductions      PayrollDeduction[]
+  taxes           PayrollTax[]
+  syncedToQB      Boolean   @default(false)
+  quickBooksPaycheckId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model PayrollDeduction {
+  id              String    @id @default(uuid())
+  payPeriodId     String
+  payPeriod       PayPeriod @relation(fields: [payPeriodId], references: [id])
+  type            DeductionType
+  amount          Decimal
+  description     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model PayrollTax {
+  id              String    @id @default(uuid())
+  payPeriodId     String
+  payPeriod       PayPeriod @relation(fields: [payPeriodId], references: [id])
+  type            TaxType
+  amount          Decimal
+  description     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model EmployeeBenefit {
+  id                  String    @id @default(uuid())
+  employeeId          String
+  employee            Employee  @relation(fields: [employeeId], references: [id])
+  type                BenefitType
+  startDate           DateTime
+  endDate             DateTime?
+  details             String?   // JSON string of benefit details
+  cost                Decimal   @default(0)
+  employerContribution Decimal   @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// Employee Performance & Documents
+model EmployeeRating {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  ratedBy     String
+  rating      Int
+  comments    String?
+  date        DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model EmployeeDocument {
+  id          String    @id @default(uuid())
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  type        DocumentType
+  name        String
+  url         String
+  expiryDate  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Enums
+enum EmploymentStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  SEASONAL
+  CONTRACT
+}
+
+enum PayType {
+  HOURLY
+  SALARY
+}
+
+enum ScheduleStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum TimeEntryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayPeriodStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum DeductionType {
+  HEALTH_INSURANCE
+  DENTAL_INSURANCE
+  VISION_INSURANCE
+  RETIREMENT_401K
+  OTHER
+}
+
+enum TaxType {
+  FEDERAL_INCOME
+  STATE_INCOME
+  SOCIAL_SECURITY
+  MEDICARE
+  OTHER
+}
+
+enum BenefitType {
+  HEALTH_INSURANCE
+  DENTAL_INSURANCE
+  VISION_INSURANCE
+  RETIREMENT_401K
+  LIFE_INSURANCE
+  OTHER
+}
+
+enum DocumentType {
+  ID
+  CERTIFICATION
+  CONTRACT
+  EVALUATION
+  OTHER
 }
