@@ -7,69 +7,80 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Boats {
-  id               Int               @id @default(autoincrement())
-  name             String
-  type             String
-  max_capacity     Int
-  license_required String
-  notes            String?
-  BoatMaintenance  BoatMaintenance[]
+enum TourName {
+  WHALES_AND_TRAILS
+  PHOTO_SAFARI
 }
 
-model Vehicles {
-  id                 Int                  @id @default(autoincrement())
-  name               String
-  type               String
-  max_capacity       Int
-  license_required   String
-  notes              String?
-  VehicleMaintenance VehicleMaintenance[]
+enum DockLocation {
+  AJ
+  FRANKLIN
+  CRUISE_SHIP_TERMINAL
+  MARINE_PARK
 }
 
-model BoatMaintenance {
-  id                         Int      @id @default(autoincrement())
-  boatId                     Int
-  hull_maintenance_due       DateTime
-  usgs_certification         DateTime
-  engine_starboard           String
-  engine_middle              String
-  engine_port                String
-  oil_change_id              Int
-  boat_engine_maintenance_id Int
-  priority_level_id          Int
-
-  boat          Boats               @relation(fields: [boatId], references: [id])
-  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
-  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+enum Trail {
+  MORAINE_ECOLOGY
+  // Add other trails as needed
 }
 
-model VehicleMaintenance {
-  id                Int      @id @default(autoincrement())
-  vehicleId         Int
-  oil_change_id     Int
-  cleaned           DateTime
-  priority_level_id Int
-
-  vehicle       Vehicles            @relation(fields: [vehicleId], references: [id])
-  oil_change    OilChanges          @relation(fields: [oil_change_id], references: [id])
-  prioity_level MaintenancePriority @relation(fields: [priority_level_id], references: [id])
+enum ShipName {
+  WESTERDAM
+  CARNIVAL_SPIRIT
+  RADIANCE_OF_THE_SEAS
+  NOORDAM
+  DISNEY_WONDER
 }
 
-model OilChanges {
-  id          Int      @id @default(autoincrement())
-  date        DateTime
-  description String
+model Tour {
+  id               Int         @id @default(autoincrement()) @map("tour_id")
+  // Basic tour information
+  tourName         TourName    @map("tour_name")
+  tourDate         DateTime    @map("tour_date") @db.Date
+  startTime        DateTime    @map("start_time") @db.Time()
+  guide            String?     @db.VarChar(50)
 
-  boat_maintenance    BoatMaintenance[]
-  vehicle_maintenance VehicleMaintenance[]
-}
+  // Ship information
+  shipName         ShipName    @map("ship_name")
+  shipDock         DockLocation @map("ship_dock")
 
-model MaintenancePriority {
-  id          Int     @id @default(autoincrement())
-  level       String
-  description String?
+  // Passenger information
+  cruisePassengers Int         @map("cruise_passengers")
+  compPassengers   Int         @map("comp_passengers")
+  minCapacity      Int         @map("min_capacity")
+  maxCapacity      Int         @map("max_capacity")
 
-  boat_maintenance    BoatMaintenance[]
-  vehicle_maintenance VehicleMaintenance[]
+  // Transfer component
+  transferDuration Int         @default(45) @map("transfer_duration") // stored in minutes
+  transferStartLocation DockLocation @map("transfer_start_location")
+  transferEndLocation  String    @default("Auke Bay") @map("transfer_end_location") @db.VarChar(50)
+  transferDriver    String?     @map("transfer_driver") @db.VarChar(50)
+  transferVehicle   String?     @map("transfer_vehicle") @db.VarChar(50)
+  transferPriority  Int         @default(1) @map("transfer_priority")
+
+  // Water component
+  waterDuration    Int         @default(135) @map("water_duration") // 2h15m in minutes
+  waterStartLocation String    @default("Auke Bay") @map("water_start_location") @db.VarChar(50)
+  waterEndLocation String      @default("Auke Bay") @map("water_end_location") @db.VarChar(50)
+  captain          String?     @map("captain") @db.VarChar(50)
+  boat             String?     @db.VarChar(50)
+  waterPriority    Int         @default(2) @map("water_priority")
+
+  // Shuttle component
+  shuttleDuration  Int         @default(120) @map("shuttle_duration") // 2h in minutes
+  shuttleStartLocation String  @default("Auke Bay") @map("shuttle_start_location") @db.VarChar(50)
+  shuttleEndLocation String?   @map("shuttle_end_location") @db.VarChar(50)
+  shuttleTrail     Trail       @default(MORAINE_ECOLOGY) @map("shuttle_trail")
+  shuttleDriver    String?     @map("shuttle_driver") @db.VarChar(50)
+  shuttleVehicle   String?     @map("shuttle_vehicle") @db.VarChar(50)
+  shuttlePriority  Int         @default(3) @map("shuttle_priority")
+
+  // Column organization
+  columnPosition   Int         @map("column_position")
+
+  // Metadata
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("tours")
 }
