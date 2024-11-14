@@ -33,54 +33,57 @@ enum ShipName {
 }
 
 model Tour {
-  id               Int         @id @default(autoincrement()) @map("tour_id")
-  // Basic tour information
-  tourName         TourName    @map("tour_name")
-  tourDate         DateTime    @map("tour_date") @db.Date
-  startTime        DateTime    @map("start_time") @db.Time()
-  guide            String?     @db.VarChar(50)
+  id    Int      @id @default(autoincrement()) @map("tour_id")
+  tourName TourName @map("tour_name")
+  tourDate     DateTime @map("tour_date")
+  startTime String  @map("start_time")
+  guide    String?  @db.VarChar(50)
 
-  // Ship information
-  shipName         ShipName    @map("ship_name")
-  shipDock         DockLocation @map("ship_dock")
+  // Ship info
+  shipName ShipName @map("ship_name")
+  shipDock DockLocation @map("ship_dock")
+  
+  // Passenger info
+  cruisePassengers Int @map("cruise_passengers")
+  compPassengers   Int @map("comp_passengers")
+  minCapacity      Int @map("min_capacity")
+  maxCapacity      Int @map("max_capacity")
 
-  // Passenger information
-  cruisePassengers Int         @map("cruise_passengers")
-  compPassengers   Int         @map("comp_passengers")
-  minCapacity      Int         @map("min_capacity")
-  maxCapacity      Int         @map("max_capacity")
-
-  // Transfer component
-  transferDuration Int         @default(45) @map("transfer_duration") // stored in minutes
+  // Transfer section
+  transferStartTime      String   @map("transfer_start_time")
+  transferEndTime        String   @map("transfer_end_time")
+  transferDuration      Int      @default(45) @map("transfer_duration")
   transferStartLocation DockLocation @map("transfer_start_location")
-  transferEndLocation  String    @default("Auke Bay") @map("transfer_end_location") @db.VarChar(50)
-  transferDriver    String?     @map("transfer_driver") @db.VarChar(50)
-  transferVehicle   String?     @map("transfer_vehicle") @db.VarChar(50)
-  transferPriority  Int         @default(1) @map("transfer_priority")
+  transferEndLocation   String   @default("Auke Bay") @map("transfer_end_location") @db.VarChar(50)
+  transferDriver        String?  @map("transfer_driver") @db.VarChar(50)
+  transferVehicle       String?  @map("transfer_vehicle") @db.VarChar(50)
+  transferPriority      Int      @default(1) @map("transfer_priority")
 
-  // Water component
-  waterDuration    Int         @default(135) @map("water_duration") // 2h15m in minutes
-  waterStartLocation String    @default("Auke Bay") @map("water_start_location") @db.VarChar(50)
-  waterEndLocation String      @default("Auke Bay") @map("water_end_location") @db.VarChar(50)
-  captain          String?     @map("captain") @db.VarChar(50)
-  boat             String?     @db.VarChar(50)
-  waterPriority    Int         @default(2) @map("water_priority")
+  // Water section
+  waterStartTime        String   @map("water_start_time")
+  waterEndTime          String   @map("water_end_time")
+  waterDuration        Int      @default(135) @map("water_duration")
+  waterStartLocation   String   @default("Auke Bay") @map("water_start_location") @db.VarChar(50)
+  waterEndLocation     String   @default("Auke Bay") @map("water_end_location") @db.VarChar(50)
+  captain             String?  @db.VarChar(50)
+  boat                String?  @db.VarChar(50)
+  waterPriority       Int      @default(2) @map("water_priority")
 
-  // Shuttle component
-  shuttleDuration  Int         @default(120) @map("shuttle_duration") // 2h in minutes
-  shuttleStartLocation String  @default("Auke Bay") @map("shuttle_start_location") @db.VarChar(50)
-  shuttleEndLocation String?   @map("shuttle_end_location") @db.VarChar(50)
-  shuttleTrail     Trail       @default(MORAINE_ECOLOGY) @map("shuttle_trail")
-  shuttleDriver    String?     @map("shuttle_driver") @db.VarChar(50)
-  shuttleVehicle   String?     @map("shuttle_vehicle") @db.VarChar(50)
-  shuttlePriority  Int         @default(3) @map("shuttle_priority")
+  // Shuttle section
+  shuttleStartTime      String   @map("shuttle_start_time")
+  shuttleEndTime        String   @map("shuttle_end_time")
+  shuttleDuration      Int      @default(120) @map("shuttle_duration")
+  shuttleStartLocation String   @default("Auke Bay") @map("shuttle_start_location") @db.VarChar(50)
+  shuttleEndLocation   String?  @map("shuttle_end_location") @db.VarChar(50)
+  shuttleTrail        Trail    @default(MORAINE_ECOLOGY) @map("shuttle_trail")
+  shuttleDriver       String?  @map("shuttle_driver") @db.VarChar(50)
+  shuttleVehicle      String?  @map("shuttle_vehicle") @db.VarChar(50)
+  shuttlePriority     Int      @default(3) @map("shuttle_priority")
 
-  // Column organization
-  columnPosition   Int         @map("column_position")
-
-  // Metadata
-  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  // Position and timestamps
+  columnPosition Int      @map("column_position")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("tours")
 }

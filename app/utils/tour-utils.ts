@@ -48,12 +48,89 @@ export const isValidTimeIncrement = (time: string): boolean => {
 /**
  * Converts a database tour record to the UI tour format
  */
+// export const dbTourToUiTour = (dbTour: any): Tour => {
+//   const tour = {
+//     id: dbTour.id,
+//     tourName: dbTour.tourName,
+//     date: new Date(dbTour.tourDate),
+//     startTime: formatTime(new Date(dbTour.startTime)),
+//     guide: dbTour.guide,
+//     shipName: dbTour.shipName,
+//     shipDock: dbTour.shipDock,
+//     cruisePassengers: dbTour.cruisePassengers,
+//     compPassengers: dbTour.compPassengers,
+//     minCapacity: dbTour.minCapacity,
+//     maxCapacity: dbTour.maxCapacity,
+//     sections: {
+//       transfer: {
+//         startLocation: dbTour.transferStartLocation,
+//         endLocation: dbTour.transferEndLocation,
+//         driver: dbTour.transferDriver,
+//         vehicle: dbTour.transferVehicle,
+//         timing: {
+//           duration: dbTour.transferDuration,
+//           priority: dbTour.transferPriority,
+//           startTime: '', // Will be calculated
+//           endTime: '', // Will be calculated
+//         },
+//       },
+//       water: {
+//         startLocation: dbTour.waterStartLocation,
+//         endLocation: dbTour.waterEndLocation,
+//         captain: dbTour.captain,
+//         boat: dbTour.boat,
+//         timing: {
+//           duration: dbTour.waterDuration,
+//           priority: dbTour.waterPriority,
+//           startTime: '', // Will be calculated
+//           endTime: '', // Will be calculated
+//         },
+//       },
+//       shuttle: {
+//         startLocation: dbTour.shuttleStartLocation,
+//         endLocation: dbTour.shuttleEndLocation,
+//         driver: dbTour.shuttleDriver,
+//         vehicle: dbTour.shuttleVehicle,
+//         trail: dbTour.shuttleTrail,
+//         timing: {
+//           duration: dbTour.shuttleDuration,
+//           priority: dbTour.shuttlePriority,
+//           startTime: '', // Will be calculated
+//           endTime: '', // Will be calculated
+//         },
+//       },
+//     },
+//     columnPosition: dbTour.columnPosition,
+//     createdAt: new Date(dbTour.createdAt),
+//     updatedAt: new Date(dbTour.updatedAt),
+//   };
+
+//   // Calculate section times based on start time
+//   const timings = calculateSectionTimes(tour.startTime, tour.sections);
+//   tour.sections = {
+//     transfer: {
+//       ...tour.sections.transfer,
+//       timing: timings.sections.transfer,
+//     },
+//     water: {
+//       ...tour.sections.water,
+//       timing: timings.sections.water,
+//     },
+//     shuttle: {
+//       ...tour.sections.shuttle,
+//       timing: timings.sections.shuttle,
+//     },
+//   };
+
+//   return tour;
+// };
+
 export const dbTourToUiTour = (dbTour: any): Tour => {
-  const tour = {
+  return {
     id: dbTour.id,
     tourName: dbTour.tourName,
     date: new Date(dbTour.tourDate),
-    startTime: formatTime(new Date(dbTour.startTime)),
+    startTime: dbTour.startTime,
     guide: dbTour.guide,
     shipName: dbTour.shipName,
     shipDock: dbTour.shipDock,
@@ -70,8 +147,8 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
         timing: {
           duration: dbTour.transferDuration,
           priority: dbTour.transferPriority,
-          startTime: '', // Will be calculated
-          endTime: '', // Will be calculated
+          startTime: dbTour.transferStartTime,  // Use the actual times from DB
+          endTime: dbTour.transferEndTime,      // instead of calculating
         },
       },
       water: {
@@ -82,8 +159,8 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
         timing: {
           duration: dbTour.waterDuration,
           priority: dbTour.waterPriority,
-          startTime: '', // Will be calculated
-          endTime: '', // Will be calculated
+          startTime: dbTour.waterStartTime,     // Use the actual times from DB
+          endTime: dbTour.waterEndTime,         // instead of calculating
         },
       },
       shuttle: {
@@ -95,8 +172,8 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
         timing: {
           duration: dbTour.shuttleDuration,
           priority: dbTour.shuttlePriority,
-          startTime: '', // Will be calculated
-          endTime: '', // Will be calculated
+          startTime: dbTour.shuttleStartTime,   // Use the actual times from DB
+          endTime: dbTour.shuttleEndTime,       // instead of calculating
         },
       },
     },
@@ -104,27 +181,7 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
     createdAt: new Date(dbTour.createdAt),
     updatedAt: new Date(dbTour.updatedAt),
   };
-
-  // Calculate section times based on start time
-  const timings = calculateSectionTimes(tour.startTime, tour.sections);
-  tour.sections = {
-    transfer: {
-      ...tour.sections.transfer,
-      timing: timings.sections.transfer,
-    },
-    water: {
-      ...tour.sections.water,
-      timing: timings.sections.water,
-    },
-    shuttle: {
-      ...tour.sections.shuttle,
-      timing: timings.sections.shuttle,
-    },
-  };
-
-  return tour;
 };
-
 /**
  * Formats a Date object to HH:mm time string
  */
