@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Dialog } from "~/components/ui/dialog";
-import { TourModal } from "~/components/schedule/TourModal";
+import { TourCreationModal } from "~/components/schedule/TourCreationModal";
 import { ScheduleGrid } from "~/components/schedule/ScheduleGrid";
 
 interface LoaderData {
@@ -54,12 +54,12 @@ export default function SchedulePage() {
       </header>
 
       <div className="flex-1 overflow-auto">
-        <ScheduleGrid onSlotClick={setSelectedSlot} />
+        {/* <ScheduleGrid onSlotClick={setSelectedSlot} /> */}
       </div>
 
       <Dialog open={!!selectedSlot} onOpenChange={() => setSelectedSlot(null)}>
         {selectedSlot && (
-          <TourModal
+          <TourCreationModal
             date={selectedSlot.date}
             time={selectedSlot.time}
             ships={ships}

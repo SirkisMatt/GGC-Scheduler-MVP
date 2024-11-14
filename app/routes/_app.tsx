@@ -51,7 +51,7 @@ export default function AppLayout() {
               <NavLink to="/scheduler" icon={Anchor}>
                 Boat Scheduler
               </NavLink>
-              <NavLink to="/employees" icon={Users}>
+              {/* <NavLink to="/employees" icon={Users}>
                 Employees
               </NavLink>
               <NavLink to="/calendar" icon={CalendarDays}>
@@ -59,7 +59,7 @@ export default function AppLayout() {
               </NavLink>
               <NavLink to="/settings" icon={Settings}>
                 Settings
-              </NavLink>
+              </NavLink> */}
             </nav>
           </div>
         </div>

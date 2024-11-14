@@ -7,317 +7,80 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Boat Scheduler Models
+enum TourName {
+  WHALES_AND_TRAILS
+  PHOTO_SAFARI
+}
+
+enum DockLocation {
+  AJ
+  FRANKLIN
+  CRUISE_SHIP_TERMINAL
+  MARINE_PARK
+}
+
+enum Trail {
+  MORAINE_ECOLOGY
+  // Add other trails as needed
+}
+
+enum ShipName {
+  WESTERDAM
+  CARNIVAL_SPIRIT
+  RADIANCE_OF_THE_SEAS
+  NOORDAM
+  DISNEY_WONDER
+}
+
 model Tour {
-  id          String    @id @default(uuid())
-  tour        String    // Tour code (e.g., WT, DW)
-  ship        String    // Ship name
-  time        String    // Time slot
-  date        DateTime  // Date of tour
-  columnId    String
-  column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  employeeIds String[]  // Array of assigned employee IDs
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+  id               Int         @id @default(autoincrement()) @map("tour_id")
+  // Basic tour information
+  tourName         TourName    @map("tour_name")
+  tourDate         DateTime    @map("tour_date") @db.Date
+  startTime        DateTime    @map("start_time") @db.Time()
+  guide            String?     @db.VarChar(50)
 
-model Column {
-  id        String   @id @default(uuid())
-  tours     Tour[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  // Ship information
+  shipName         ShipName    @map("ship_name")
+  shipDock         DockLocation @map("ship_dock")
 
-// Employee Management Models
-model Employee {
-  id                String    @id @default(uuid())
-  firstName         String
-  lastName          String
-  email             String?   @unique
-  phone             String?
-  address           String?
-  emergencyContact  String?
-  emergencyPhone    String?
-  
-  // Employment Details
-  employeeNumber    String?   @unique
-  role             Role      @relation(fields: [roleId], references: [id])
-  roleId           String
-  employmentStatus EmploymentStatus @default(ACTIVE)
-  employmentType   EmploymentType  @default(FULL_TIME)
-  startDate        DateTime
-  endDate          DateTime?
-  
-  // Work Preferences
-  notes            String?
-  cdl              Boolean   @default(false)
-  daysPerWeek      Int
-  availability     String    // JSON array of available days
-  daysOff          String    // JSON array of permanent days off
-  preferredShifts  String?   // JSON array of preferred shift times
-  
-  // Payroll Information
-  quickBooksEmployeeId String?   @unique
-  payRate          Decimal    @default(0.00)
-  payType          PayType    @default(HOURLY)
-  overtimeEligible Boolean    @default(true)
-  taxWithholdings  String?    // JSON object of tax withholding preferences
-  
-  // Benefits
-  benefitsEligible Boolean    @default(false)
-  benefitPlans     EmployeeBenefit[]
-  
-  // Relationships
-  certifications   EmployeeCertification[]
-  schedules        Schedule[]
-  timeEntries      TimeEntry[]
-  payPeriods       PayPeriod[]
-  ratings          EmployeeRating[]
-  documents        EmployeeDocument[]
-  
-  // Audit
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-}
+  // Passenger information
+  cruisePassengers Int         @map("cruise_passengers")
+  compPassengers   Int         @map("comp_passengers")
+  minCapacity      Int         @map("min_capacity")
+  maxCapacity      Int         @map("max_capacity")
 
-model Role {
-  id           String     @id @default(uuid())
-  name         String     @unique
-  description  String?
-  category     String?    // Guide, Support, Management, etc.
-  employees    Employee[]
-  permissions  String[]   // Array of permission codes
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-}
+  // Transfer component
+  transferDuration Int         @default(45) @map("transfer_duration") // stored in minutes
+  transferStartLocation DockLocation @map("transfer_start_location")
+  transferEndLocation  String    @default("Auke Bay") @map("transfer_end_location") @db.VarChar(50)
+  transferDriver    String?     @map("transfer_driver") @db.VarChar(50)
+  transferVehicle   String?     @map("transfer_vehicle") @db.VarChar(50)
+  transferPriority  Int         @default(1) @map("transfer_priority")
 
-model EmployeeCertification {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  type        CertificationType @relation(fields: [typeId], references: [id])
-  typeId      String
-  issuedDate  DateTime
-  expiryDate  DateTime?
-  document    String?   // Document URL/path
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+  // Water component
+  waterDuration    Int         @default(135) @map("water_duration") // 2h15m in minutes
+  waterStartLocation String    @default("Auke Bay") @map("water_start_location") @db.VarChar(50)
+  waterEndLocation String      @default("Auke Bay") @map("water_end_location") @db.VarChar(50)
+  captain          String?     @map("captain") @db.VarChar(50)
+  boat             String?     @db.VarChar(50)
+  waterPriority    Int         @default(2) @map("water_priority")
 
-model CertificationType {
-  id            String    @id @default(uuid())
-  code          String    @unique  // e.g., CDL, WRT, PG
-  name          String    
-  description   String?
-  validity      Int?      // Validity period in months
-  certifications EmployeeCertification[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
+  // Shuttle component
+  shuttleDuration  Int         @default(120) @map("shuttle_duration") // 2h in minutes
+  shuttleStartLocation String  @default("Auke Bay") @map("shuttle_start_location") @db.VarChar(50)
+  shuttleEndLocation String?   @map("shuttle_end_location") @db.VarChar(50)
+  shuttleTrail     Trail       @default(MORAINE_ECOLOGY) @map("shuttle_trail")
+  shuttleDriver    String?     @map("shuttle_driver") @db.VarChar(50)
+  shuttleVehicle   String?     @map("shuttle_vehicle") @db.VarChar(50)
+  shuttlePriority  Int         @default(3) @map("shuttle_priority")
 
-// Schedule Management
-model Schedule {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  date        DateTime
-  startTime   DateTime
-  endTime     DateTime
-  activityId  String
-  activity    Activity  @relation(fields: [activityId], references: [id])
-  notes       String?
-  status      ScheduleStatus @default(SCHEDULED)
-  timeEntry   TimeEntry?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+  // Column organization
+  columnPosition   Int         @map("column_position")
 
-model Activity {
-  id          String    @id @default(uuid())
-  code        String    @unique  // WRT, PG, etc.
-  name        String
-  description String?
-  category    String    // Water, Land, etc.
-  duration    Int       // Default duration in minutes
-  schedules   Schedule[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+  // Metadata
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-// Time Tracking & Payroll
-model TimeEntry {
-  id              String    @id @default(uuid())
-  employeeId      String
-  employee        Employee  @relation(fields: [employeeId], references: [id])
-  scheduleId      String?   @unique
-  schedule        Schedule? @relation(fields: [scheduleId], references: [id])
-  date            DateTime
-  startTime       DateTime
-  endTime         DateTime
-  breakDuration   Int       @default(0)  // In minutes
-  regularHours    Decimal   @default(0)
-  overtimeHours   Decimal   @default(0)
-  notes           String?
-  status          TimeEntryStatus @default(PENDING)
-  approvedBy      String?
-  approvedAt      DateTime?
-  syncedToQB      Boolean   @default(false)
-  quickBooksTimeEntryId String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model PayPeriod {
-  id              String    @id @default(uuid())
-  employeeId      String
-  employee        Employee  @relation(fields: [employeeId], references: [id])
-  startDate       DateTime
-  endDate         DateTime
-  status          PayPeriodStatus @default(DRAFT)
-  regularHours    Decimal   @default(0)
-  overtimeHours   Decimal   @default(0)
-  grossPay        Decimal   @default(0)
-  netPay          Decimal   @default(0)
-  deductions      PayrollDeduction[]
-  taxes           PayrollTax[]
-  syncedToQB      Boolean   @default(false)
-  quickBooksPaycheckId String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model PayrollDeduction {
-  id              String    @id @default(uuid())
-  payPeriodId     String
-  payPeriod       PayPeriod @relation(fields: [payPeriodId], references: [id])
-  type            DeductionType
-  amount          Decimal
-  description     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model PayrollTax {
-  id              String    @id @default(uuid())
-  payPeriodId     String
-  payPeriod       PayPeriod @relation(fields: [payPeriodId], references: [id])
-  type            TaxType
-  amount          Decimal
-  description     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model EmployeeBenefit {
-  id                  String    @id @default(uuid())
-  employeeId          String
-  employee            Employee  @relation(fields: [employeeId], references: [id])
-  type                BenefitType
-  startDate           DateTime
-  endDate             DateTime?
-  details             String?   // JSON string of benefit details
-  cost                Decimal   @default(0)
-  employerContribution Decimal   @default(0)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-}
-
-// Employee Performance & Documents
-model EmployeeRating {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  ratedBy     String
-  rating      Int
-  comments    String?
-  date        DateTime
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model EmployeeDocument {
-  id          String    @id @default(uuid())
-  employeeId  String
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  type        DocumentType
-  name        String
-  url         String
-  expiryDate  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-// Enums
-enum EmploymentStatus {
-  ACTIVE
-  INACTIVE
-  ON_LEAVE
-  TERMINATED
-}
-
-enum EmploymentType {
-  FULL_TIME
-  PART_TIME
-  SEASONAL
-  CONTRACT
-}
-
-enum PayType {
-  HOURLY
-  SALARY
-}
-
-enum ScheduleStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
-}
-
-enum TimeEntryStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum PayPeriodStatus {
-  DRAFT
-  PENDING
-  APPROVED
-  PAID
-}
-
-enum DeductionType {
-  HEALTH_INSURANCE
-  DENTAL_INSURANCE
-  VISION_INSURANCE
-  RETIREMENT_401K
-  OTHER
-}
-
-enum TaxType {
-  FEDERAL_INCOME
-  STATE_INCOME
-  SOCIAL_SECURITY
-  MEDICARE
-  OTHER
-}
-
-enum BenefitType {
-  HEALTH_INSURANCE
-  DENTAL_INSURANCE
-  VISION_INSURANCE
-  RETIREMENT_401K
-  LIFE_INSURANCE
-  OTHER
-}
-
-enum DocumentType {
-  ID
-  CERTIFICATION
-  CONTRACT
-  EVALUATION
-  OTHER
+  @@map("tours")
 }

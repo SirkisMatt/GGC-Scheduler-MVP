@@ -1,0 +1,224 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Ship {
+  id        Int           @id @default(autoincrement()) @map("ship_id")
+  name      String        @map("ship_name") @db.VarChar(50)
+  updated_at    DateTime       @updatedAt
+  dockings  ShipDocking[]
+  tours     Tour[]
+
+  @@map("ships")
+}
+
+model ShipDocking {
+  id          Int      @id @default(autoincrement()) @map("ship_docking")
+  shipId      Int      @map("ship_id")
+  dockId      Int      @map("dock_id")
+  arrivalTime DateTime @map("arrival_time")
+  allAboard   DateTime @map("all_aboard")
+  linesOff    DateTime @map("lines_off")
+  updated_at   DateTime @updatedAt
+  
+  ship        Ship     @relation(fields: [shipId], references: [id])
+  location    Location @relation(fields: [dockId], references: [id])
+
+  @@map("ship_dockings")
+}
+
+model LocationType {
+  id       Int        @id @default(autoincrement()) @map("location_type_id")
+  name     String     @map("location_type_name") @db.VarChar(50)
+  locations Location[]
+
+  @@map("location_types")
+}
+
+model Location {
+  id             Int            @id @default(autoincrement()) @map("location_id")
+  locationTypeId Int           @map("location_type_id")
+  name           String        @map("location_name") @db.VarChar(50)
+  coordinates    String        // Using String for POINT type, might need custom handling
+  type           LocationType  @relation(fields: [locationTypeId], references: [id])
+  
+  shipDockings          ShipDocking[]
+  toursAsDock          Tour[]
+  componentStartLocations TourComponentInstance[] @relation("StartLocation")
+  componentEndLocations   TourComponentInstance[] @relation("EndLocation")
+
+  @@map("locations")
+}
+
+model VehicleType {
+  id       Int       @id @default(autoincrement()) @map("vehicle_type_id")
+  name     String    @map("vehicle_type_name") @db.VarChar(50)
+  vehicles Vehicle[]
+
+  @@map("vehicle_types")
+}
+
+model VehicleStatus {
+  id          Int       @id @default(autoincrement()) @map("vehicle_status_id")
+  description String    @map("status_description") @db.VarChar(50)
+  vehicles    Vehicle[]
+
+  @@map("vehicle_statuses")
+}
+
+model Vehicle {
+  id              Int                    @id @default(autoincrement()) @map("vehicle_id")
+  typeId          Int                    @map("vehicle_type_id")
+  statusId        Int                    @map("vehicle_status_id")
+  name            String                 @map("vehicle_name") @db.VarChar(50)
+  capacity        Int
+  type            VehicleType           @relation(fields: [typeId], references: [id])
+  status          VehicleStatus         @relation(fields: [statusId], references: [id])
+  updated_at        DateTime                @updatedAt
+  componentInstances TourComponentInstance[]
+
+  @@map("vehicles")
+}
+
+model Employee {
+  id                Int                    @id @default(autoincrement()) @map("employee_id")
+  firstName         String                 @map("first_name") @db.VarChar(50)
+  lastName          String                 @map("last_name") @db.VarChar(50)
+  firstDay          DateTime               @map("first_day") @db.Date
+  lastDay           DateTime?              @map("last_day") @db.Date
+  cdl               Boolean                @default(false)
+  updated_at     DateTime                @updatedAt
+  jobs              EmployeeJob[]
+  toursAsGuide      Tour[]
+  componentInstances TourComponentInstance[]
+
+  @@map("employees")
+}
+
+model Job {
+  id          Int           @id @default(autoincrement()) @map("job_id")
+  name        String        @map("job_name") @db.VarChar(50)
+  category    String        @map("job_category") @db.VarChar(50)
+  employees   EmployeeJob[]
+
+  @@map("jobs")
+}
+
+model EmployeeJob {
+  employeeId Int      @map("employee_id")
+  jobId      Int      @map("job_id")
+  hourlyRate Decimal  @map("hourly_rate") @db.Decimal(10,2)
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@id([employeeId, jobId])
+  @@map("employee_jobs")
+}
+
+model Trail {
+  id           Int          @id @default(autoincrement()) @map("trail_id")
+  name         String       @map("trail_name") @db.VarChar(50)
+  maxCapacity  Int?         @map("trail_max")
+  permit       String?      @db.VarChar(50)
+  notes        String?      @db.Text
+  trailUse     TrailUse[]
+  componentInstances TourComponentInstance[]
+
+  @@map("trails")
+}
+
+model TourType {
+  id        Int                  @id @default(autoincrement()) @map("tour_type_id")
+  name      String               @map("tour_name") @db.VarChar(50)
+  minPax    Int?                @map("min_pax")
+  maxPax    Int?                @map("max_pax")
+  components TourTypeComponent[]
+  tours     Tour[]
+
+  @@map("tour_types")
+}
+
+model TourComponent {
+  id          Int                  @id @default(autoincrement()) @map("tour_component_id")
+  name        String               @map("tour_component_name") @db.VarChar(50)
+  duration    Int                  // Store duration in minutes for simplicity
+  tourTypes   TourTypeComponent[]
+  instances   TourComponentInstance[]
+
+  @@map("tour_components")
+}
+
+model TourTypeComponent {
+  tourTypeId      Int           @map("tour_type_id")
+  componentId     Int           @map("tour_component_id")
+  priority        Int
+  tourType        TourType      @relation(fields: [tourTypeId], references: [id])
+  tourComponent   TourComponent @relation(fields: [componentId], references: [id])
+
+  @@id([tourTypeId, componentId])
+  @@map("tour_type_components")
+}
+
+model TourComponentInstance {
+  id                Int           @id @default(autoincrement()) @map("tour_component_instance")
+  tourId           Int           @map("tour_id")
+  componentId      Int           @map("tour_component_id")
+  employeeId       Int?          @map("employee_id")
+  vehicleId        Int?          @map("vehicle_id")
+  startLocationId  Int?          @map("start_location_id")
+  endLocationId    Int?          @map("end_location_id")
+  trailId          Int?          @map("trail_id")
+  startTime        DateTime?     @map("tour_component_start_time")
+  endTime          DateTime?     @map("tour_component_end_time")
+  payrollStartTime DateTime?     @map("payroll_start_time")
+  payrollEndTime   DateTime?     @map("payroll_end_time")
+
+  tour          Tour          @relation(fields: [tourId], references: [id])
+  component     TourComponent @relation(fields: [componentId], references: [id])
+  employee      Employee?     @relation(fields: [employeeId], references: [id])
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  startLocation Location?     @relation("StartLocation", fields: [startLocationId], references: [id])
+  endLocation   Location?     @relation("EndLocation", fields: [endLocationId], references: [id])
+  trail         Trail?        @relation(fields: [trailId], references: [id])
+
+  @@map("tour_component_instances")
+}
+
+model Tour {
+  id                Int                    @id @default(autoincrement()) @map("tour_id")
+  shipId            Int?                   @map("ship_id")
+  dockId            Int?                   @map("dock_id")
+  guideId           Int?                   @map("guide_id")
+  tourTypeId        Int                    @map("tour_type_id")
+  cruisePax         Int?                   @map("cruise_pax")
+  compPax           Int?                   @map("comp_pax")
+  startTime         DateTime               @map("start_time")
+  cancelStatus      Boolean                @default(false) @map("cx_status")
+  column_level     Int                     @default(0)
+  updated_at       DateTime                @updatedAt
+  
+  ship              Ship?                  @relation(fields: [shipId], references: [id])
+  dock              Location?              @relation(fields: [dockId], references: [id])
+  guide             Employee?              @relation(fields: [guideId], references: [id])
+  tourType          TourType              @relation(fields: [tourTypeId], references: [id])
+  components        TourComponentInstance[]
+  trailUse          TrailUse[]
+
+  @@map("tours")
+}
+
+model TrailUse {
+  trailId Int    @map("trail_id")
+  tourId  Int    @map("tour_id")
+  count   Int
+  trail   Trail  @relation(fields: [trailId], references: [id])
+  tour    Tour   @relation(fields: [tourId], references: [id])
+
+  @@id([trailId, tourId])
+  @@map("trail_use")
+}

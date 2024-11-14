@@ -4,16 +4,17 @@ export function TimeColumn() {
   const timeSlots = generateTimeSlots();
 
   return (
-    <div className="w-20 flex-shrink-0 border-r border-gray-200 bg-white">
-      <div className="h-14 border-b border-gray-200" /> {/* Header spacer */}
-      <div className="relative">
+    <div className="w-20 flex-shrink-0 border-r bg-white">
+      <div className="h-[49px] border-b" /> {/* Header spacer */}
+      <div className="grid grid-rows-[repeat(64,15px)]">
         {timeSlots.map((time) => (
           <div
-            key={time.index}
-            className="absolute w-full border-b border-gray-200 text-xs text-gray-500"
-            style={{ top: `${time.index * 60}px`, height: "60px" }}
+            key={time}
+            className="relative h-[15px] border-t border-gray-200"
           >
-            <span className="absolute -top-2 right-2">{time.label}</span>
+            <span className="absolute top-0 -translate-y-1/2 right-2 text-xs text-gray-500">
+              {time}
+            </span>
           </div>
         ))}
       </div>
