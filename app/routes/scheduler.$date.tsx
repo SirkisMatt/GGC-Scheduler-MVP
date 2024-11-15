@@ -18,6 +18,7 @@ import type { Tour } from "~/types";
 import { ScheduleGrid } from "~/components/schedule/ScheduleGrid";
 // import { TourCreationModal } from "~/components/schedule/TourCreationModal";
 import { useState } from "react";
+import { convertTimeToDateTime } from "~/utils/time";
 
 interface LoaderData {
   tours: Tour[];

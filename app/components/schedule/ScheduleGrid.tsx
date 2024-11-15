@@ -52,13 +52,23 @@ export function ScheduleGrid({
     newTime: string
   ) => {
     try {
-      // Don't update local state - let the parent handle it through the tours prop
-      await onTourUpdate(tourId, {
+      // Validate inputs before updating
+      if (!tourId || newColumnPosition < 0 || !newTime) {
+        throw new Error("Invalid tour update parameters");
+      }
+
+      // Create the update object
+      const updates: Partial<Tour> = {
         columnPosition: newColumnPosition,
         startTime: newTime,
-      });
+      };
+
+      // Call the update function
+      await onTourUpdate(tourId, updates);
     } catch (error) {
       console.error("Failed to update tour position:", error);
+      // Optionally show a user-friendly error message
+      // You might want to add a toast notification here
     }
   };
 

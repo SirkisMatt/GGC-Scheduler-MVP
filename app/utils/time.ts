@@ -1,3 +1,5 @@
+import { Tour } from "~/types/tour";
+
 // TimeUtils.tsx
 export const START_HOUR = 7;
 export const END_HOUR = 23;
@@ -37,3 +39,57 @@ export const generateTimeSlots = () =>
       .toString()
       .padStart(2, "0")}`;
   });
+
+export function convertTimeToDateTime(time: string, date: Date): Date {
+  const [hours, minutes] = time.split(':').map(Number);
+  const dateTime = new Date(date);
+  dateTime.setHours(hours, minutes, 0); // Set hours and minutes, seconds to 0
+  return dateTime;
+}
+
+export function calculateSectionTimes(startTime: string, sections: Tour['sections']): Tour['sections'] {
+  // Convert start time to minutes since midnight for easier calculation
+  const [hours, minutes] = startTime.split(':').map(Number);
+  let currentTimeInMinutes = hours * 60 + minutes;
+
+  // Transfer section
+  const transferStartTime = startTime;
+  const transferEndTime = formatTime(currentTimeInMinutes + sections.transfer.timing.duration);
+  currentTimeInMinutes += sections.transfer.timing.duration;
+
+  // Water section
+  const waterStartTime = formatTime(currentTimeInMinutes);
+  const waterEndTime = formatTime(currentTimeInMinutes + sections.water.timing.duration);
+  currentTimeInMinutes += sections.water.timing.duration;
+
+  // Shuttle section
+  const shuttleStartTime = formatTime(currentTimeInMinutes);
+  const shuttleEndTime = formatTime(currentTimeInMinutes + sections.shuttle.timing.duration);
+
+  return {
+    transfer: {
+      ...sections.transfer,
+      timing: {
+        ...sections.transfer.timing,
+        startTime: transferStartTime,
+        endTime: transferEndTime,
+      },
+    },
+    water: {
+      ...sections.water,
+      timing: {
+        ...sections.water.timing,
+        startTime: waterStartTime,
+        endTime: waterEndTime,
+      },
+    },
+    shuttle: {
+      ...sections.shuttle,
+      timing: {
+        ...sections.shuttle.timing,
+        startTime: shuttleStartTime,
+        endTime: shuttleEndTime,
+      },
+    },
+  };
+}
