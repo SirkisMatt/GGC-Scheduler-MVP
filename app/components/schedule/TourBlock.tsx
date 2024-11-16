@@ -45,7 +45,7 @@ function TruncatedText({
 }) {
   const TextContent = (
     <span className="inline-flex min-w-0">
-      {label && <span className="font-medium">{label}</span>}
+      {label && <span className="font-medium whitespace-pre">{label}</span>}
       <span className="truncate">{text || "Unassigned"}</span>
     </span>
   );
@@ -56,7 +56,7 @@ function TruncatedText({
         {TextContent}
       </TooltipTrigger>
       <TooltipContent>
-        {label && <span className="font-medium">{label}</span>}
+        {label && <span className="font-medium whitespace-pre">{label}</span>}
         {text || "Unassigned"}
       </TooltipContent>
     </Tooltip>
@@ -71,7 +71,7 @@ function CrewSection({
   vehicle: string | null;
 }) {
   return (
-    <div className="flex items-center gap-14 text-xs text-slate-500">
+    <div className="flex items-center gap-20 text-xs text-slate-500">
       <div className="flex-1 min-w-0">
         <TruncatedText text={driver} label="D: " />
       </div>
@@ -85,36 +85,41 @@ interface TourBlockProps {
   tour: Tour;
   onEdit: (tour: Tour) => void;
   onDelete?: (tourId: number) => void;
+  onDragStart: (e: React.DragEvent) => void;
 }
 
-export default function TourBlock({ tour, onEdit }: TourBlockProps) {
-  const handleDragStart = (e: React.DragEvent) => {
-    try {
-      e.dataTransfer.setData("application/json", JSON.stringify(tour));
-      const originalRect = e.currentTarget.getBoundingClientRect();
-      const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+export default function TourBlock({
+  tour,
+  onEdit,
+  onDragStart,
+}: TourBlockProps) {
+  // const handleDragStart = (e: React.DragEvent) => {
+  //   try {
+  //     e.dataTransfer.setData("application/json", JSON.stringify(tour));
+  //     const originalRect = e.currentTarget.getBoundingClientRect();
+  //     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
 
-      Object.assign(dragImage.style, {
-        width: `${originalRect.width}px`,
-        height: `${originalRect.height}px`,
-        position: "absolute",
-        top: "-1000px",
-        left: "-1000px",
-        margin: "0",
-        transform: "none",
-      });
+  //     Object.assign(dragImage.style, {
+  //       width: `${originalRect.width}px`,
+  //       height: `${originalRect.height}px`,
+  //       position: "absolute",
+  //       top: "-1000px",
+  //       left: "-1000px",
+  //       margin: "0",
+  //       transform: "none",
+  //     });
 
-      document.body.appendChild(dragImage);
-      e.dataTransfer.setDragImage(
-        dragImage,
-        originalRect.width / 2,
-        originalRect.height / 2
-      );
-      requestAnimationFrame(() => document.body.removeChild(dragImage));
-    } catch (error) {
-      console.error("Error starting drag:", error);
-    }
-  };
+  //     document.body.appendChild(dragImage);
+  //     e.dataTransfer.setDragImage(
+  //       dragImage,
+  //       originalRect.width / 2,
+  //       originalRect.height / 2
+  //     );
+  //     requestAnimationFrame(() => document.body.removeChild(dragImage));
+  //   } catch (error) {
+  //     console.error("Error starting drag:", error);
+  //   }
+  // };
 
   const position = React.useMemo(() => {
     try {
@@ -151,6 +156,27 @@ export default function TourBlock({ tour, onEdit }: TourBlockProps) {
     <TooltipProvider>
       <div
         draggable
+        onDragStart={onDragStart}
+        style={{
+          position: "absolute",
+          top: `${TimeManager.timeToSlot(tour.startTime) * 15}px`,
+          left: 0,
+          right: 0,
+          height: `${
+            tour.sections.transfer.timing.duration +
+            tour.sections.water.timing.duration +
+            tour.sections.shuttle.timing.duration
+          }px`,
+          width: "calc(100% - 16px)",
+        }}
+        className={cn(
+          "group mx-2 rounded-lg shadow-sm hover:shadow-md",
+          "transition-all border border-slate-200",
+          "flex flex-col overflow-hidden"
+        )}
+      >
+        {/* <div
+        draggable
         onDragStart={handleDragStart}
         style={{
           position: "absolute",
@@ -165,10 +191,10 @@ export default function TourBlock({ tour, onEdit }: TourBlockProps) {
           "transition-all border border-slate-200",
           "flex flex-col overflow-hidden"
         )}
-      >
+      > */}
         {/* Transfer Section */}
         <div
-          style={{ height: `${durations.transfer}px`, minHeight: "50px" }}
+          style={{ height: `${durations.transfer}px`, minHeight: "40px" }}
           className="w-full bg-slate-50/80 p-2.5 border-b border-slate-200 relative z-10 flex-none"
         >
           <div className="flex items-start justify-between h-full">
@@ -192,7 +218,7 @@ export default function TourBlock({ tour, onEdit }: TourBlockProps) {
 
         {/* Water Section */}
         <div
-          style={{ height: `${durations.water}px`, minHeight: "90px" }}
+          style={{ height: `${durations.water}px` }}
           className={cn(
             "w-full p-2.5 border-b border-slate-200 relative z-20 flex-1",
             getBoatColor(tour.sections.water.boat)
@@ -233,12 +259,17 @@ export default function TourBlock({ tour, onEdit }: TourBlockProps) {
             </div>
 
             <div className="space-y-1">
-              <TruncatedText
-                text={`Captain: ${tour.sections.water.captain || "Unassigned"}`}
-              />
-              <TruncatedText
-                text={`Boat: ${tour.sections.water.boat || "Unassigned"}`}
-              />
+              <div className="text-sm">
+                <TruncatedText
+                  text={`Captain: ${
+                    tour.sections.water.captain || "Unassigned"
+                  }`}
+                />
+                <TruncatedText
+                  text={`Boat: ${tour.sections.water.boat || "Unassigned"}`}
+                />
+              </div>
+
               <div className="text-xs">
                 Passengers: {tour.cruisePassengers + tour.compPassengers}
               </div>

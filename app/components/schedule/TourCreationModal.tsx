@@ -35,15 +35,16 @@ import { z } from "zod";
 import { format, addMinutes } from "date-fns";
 import type { Tour } from "~/types/tour";
 import { TourName, ShipName, DockLocation, Trail } from "@prisma/client";
+import { drivers, vehicles } from "../../../data/tour-data";
 import { TransferSection } from "./tour-forms/TransferSection";
 import { WaterSection } from "./tour-forms/WaterSection";
 import { ShuttleSection } from "./tour-forms/ShuttleSection";
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 // Initial form schema matches our Tour type
 const initialFormSchema = z.object({
   tourName: z.nativeEnum(TourName),
   shipName: z.nativeEnum(ShipName),
-  shipDock: z.nativeEnum(DockLocation),
   cruisePassengers: z.number().min(0),
   compPassengers: z.number().min(0),
   guide: z.string(),
@@ -155,10 +156,14 @@ export function TourCreationFlow({
   });
 
   const handleInitialSubmit = (values: InitialFormValues) => {
+    console.log("Attempting form submission with values:", values);
     setInitialValues(values);
     setShowDetailedForm(true);
   };
 
+  const onError = (errors: any) => {
+    console.log("Form validation errors:", errors);
+  };
   const handleDetailedSubmit = (values: DetailedFormValues) => {
     // if (!initialValues) return;
     // // Combine both forms' data into final Tour object
@@ -172,6 +177,7 @@ export function TourCreationFlow({
     // };
     // onSubmit(tourData);
     // onOpenChange(false);
+    return;
   };
 
   // Filter helpers
@@ -216,7 +222,7 @@ export function TourCreationFlow({
           </DialogHeader>
           <Form {...initialForm}>
             <form
-              onSubmit={initialForm.handleSubmit(handleInitialSubmit)}
+              onSubmit={initialForm.handleSubmit(handleInitialSubmit, onError)}
               className="space-y-4"
             >
               <div className="grid grid-cols-2 gap-4">
@@ -228,7 +234,7 @@ export function TourCreationFlow({
                       <FormLabel>Tour Type</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -256,7 +262,7 @@ export function TourCreationFlow({
                       <FormLabel>Ship</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -325,23 +331,18 @@ export function TourCreationFlow({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Guide</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select guide" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {employees
-                          .filter((e) => e.roles.includes("guide"))
-                          .map((guide) => (
-                            <SelectItem key={guide.id} value={guide.id}>
-                              {guide.name}
-                            </SelectItem>
-                          ))}
+                        {drivers.map((guide) => (
+                          <SelectItem key={guide} value={guide}>
+                            {guide}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -367,7 +368,14 @@ export function TourCreationFlow({
                 )}
               />
 
-              <Button type="submit">Next</Button>
+              <Button
+                type="submit"
+                onClick={() =>
+                  console.log("Button clicked", initialForm.getValues())
+                }
+              >
+                Next
+              </Button>
             </form>
           </Form>
         </DialogContent>
@@ -378,15 +386,18 @@ export function TourCreationFlow({
         open={showDetailedForm}
         onOpenChange={() => setShowDetailedForm(false)}
       >
-        <SheetContent side="right" className="w-full max-w-3xl overflow-y-auto">
-          <SheetHeader>
+        <SheetContent
+          side="right"
+          className="w-full max-w-3xl overflow-y-auto bg-white border-l shadow-lg"
+        >
+          <SheetHeader className="border-b pb-4">
             <SheetTitle>Tour Details</SheetTitle>
           </SheetHeader>
 
           <Form {...detailedForm}>
             <form
               onSubmit={detailedForm.handleSubmit(handleDetailedSubmit)}
-              className="space-y-6 py-4"
+              className="space-y-6 py-4 bg-white"
             >
               {/* Section Forms */}
               <TransferSection
@@ -410,7 +421,7 @@ export function TourCreationFlow({
                 tourType={initialValues?.tourName}
               />
 
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => setShowDetailedForm(false)}
