@@ -1,15 +1,12 @@
 import React from "react";
-import {
-  Trash2,
-  Plus,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { format } from "date-fns";
+import PrintSchedule from "./PrintSchedule";
+import { Tour } from "~/types/tour";
 
 interface SchedulerHeaderProps {
+  tours: Tour[];
   date: Date;
   onPrevDay: () => void;
   onNextDay: () => void;
@@ -21,6 +18,7 @@ interface SchedulerHeaderProps {
 
 export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   date,
+  tours,
   onPrevDay,
   onNextDay,
   onAddTour,
@@ -65,17 +63,10 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
             </Button>
           </div>
 
-          {/* Delete Column Button - only shown if there are columns */}
-          {columnCount > 0 && (
-            <Button
-              variant="outline"
-              onClick={onDeleteColumn}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Column
-            </Button>
-          )}
+          {/* Print Schedule */}
+          <div className="text-red-600 hover:text-red-700 hover:bg-red-50">
+            <PrintSchedule tours={tours} date={format(date, "yyyy-MM-dd")} />
+          </div>
         </div>
       </div>
     </div>
