@@ -10,6 +10,11 @@ interface ScheduleGridProps {
   tours: Tour[];
   onSlotClick: (slot: { date: Date; time: string }) => void;
   onTourUpdate: (tourId: number, updates: Partial<Tour>) => void;
+  onTourDrop: (
+    tourId: number,
+    columnPosition: number,
+    startTime: string
+  ) => void;
   onTourDelete: (tourId: number) => void;
 }
 
@@ -17,6 +22,7 @@ export function ScheduleGrid({
   tours,
   onSlotClick,
   onTourUpdate,
+  onTourDrop,
   onTourDelete,
 }: ScheduleGridProps) {
   const [columns, setColumns] = useState<
@@ -56,6 +62,7 @@ export function ScheduleGrid({
       if (!tourId || newColumnPosition < 0 || !newTime) {
         throw new Error("Invalid tour update parameters");
       }
+      await onTourDrop(tourId, newColumnPosition, newTime);
 
       // Create the update object
       const updates: Partial<Tour> = {
@@ -64,7 +71,7 @@ export function ScheduleGrid({
       };
 
       // Call the update function
-      await onTourUpdate(tourId, updates);
+      // await onTourUpdate(tourId, updates);
     } catch (error) {
       console.error("Failed to update tour position:", error);
       // Optionally show a user-friendly error message

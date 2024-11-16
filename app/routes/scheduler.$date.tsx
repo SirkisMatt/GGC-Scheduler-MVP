@@ -128,7 +128,6 @@ export const action: ActionFunction = async ({ request }) => {
           { status: 400 }
         );
       }
-
       const tour = await updateTourPosition(tourId, columnPosition, startTime);
       return json({ tour });
     }
@@ -162,6 +161,21 @@ export default function SchedulerPage() {
       { method: "post" }
     );
   };
+  const handleTourMove = async (
+    tourId: number,
+    columnPosition: number,
+    startTime: string
+  ) => {
+    fetcher.submit(
+      {
+        intent: "move",
+        tourId: tourId,
+        columnPosition: columnPosition,
+        startTime: startTime.toString(),
+      },
+      { method: "post" }
+    );
+  };
 
   const handleTourDelete = (tourId: number) => {
     if (window.confirm("Are you sure you want to delete this tour?")) {
@@ -187,6 +201,7 @@ export default function SchedulerPage() {
           }))}
           onSlotClick={setSelectedSlot}
           onTourUpdate={handleTourUpdate}
+          onTourDrop={handleTourMove}
           onTourDelete={handleTourDelete}
         />
       </div>

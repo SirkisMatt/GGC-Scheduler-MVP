@@ -161,7 +161,6 @@ export function TourCreationFlow({
 
   const handleDetailedSubmit = (values: DetailedFormValues) => {
     // if (!initialValues) return;
-
     // // Combine both forms' data into final Tour object
     // const tourData: Tour = {
     //   ...initialValues,
@@ -171,10 +170,8 @@ export function TourCreationFlow({
     //   minCapacity: 8, // Default values - could be made dynamic based on tour type
     //   maxCapacity: 20,
     // };
-
     // onSubmit(tourData);
     // onOpenChange(false);
-    console.log("Tour data:", values);
   };
 
   // Filter helpers

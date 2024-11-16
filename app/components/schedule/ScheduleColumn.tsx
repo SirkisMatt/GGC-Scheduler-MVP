@@ -28,7 +28,7 @@ export function ScheduleColumn({
 }: ScheduleColumnProps) {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    // e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = (e: React.DragEvent) => {

@@ -93,3 +93,10 @@ export function calculateSectionTimes(startTime: string, sections: Tour['section
     },
   };
 }
+
+export function addMinutes(time: string, minutes: number): string {
+  const [hours, mins] = time.split(':').map(Number);
+  const date = new Date(2000, 0, 1, hours, mins);
+  date.setMinutes(date.getMinutes() + minutes);
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
