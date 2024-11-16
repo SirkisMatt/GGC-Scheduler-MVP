@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { format, addDays, subDays } from "date-fns";
-import { Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { formatTime } from "~/utils/time";
+import { useState, useEffect } from "react";
+import { addDays, subDays } from "date-fns";
 import { ScheduleColumn } from "./ScheduleColumn";
 import { TimeColumn } from "./TimeColumn";
 import { SchedulerHeader } from "./SchedulerHeader";
@@ -79,6 +76,7 @@ export function ScheduleGrid({
   return (
     <div className="flex flex-col h-full">
       <SchedulerHeader
+        tours={tours}
         date={date}
         onPrevDay={() => onDateChange(subDays(date, 1))}
         onNextDay={() => onDateChange(addDays(date, 1))}

@@ -10,7 +10,6 @@ import {
   updateTourPosition,
 } from "~/models/tours.server";
 import { isValidTimeIncrement } from "~/utils/tour-utils";
-import { Trail } from "@prisma/client";
 import type { DockLocation } from "~/types";
 import type { ShipName } from "~/types";
 import type { TourName } from "~/types";
@@ -18,7 +17,6 @@ import type { Tour } from "~/types";
 import { ScheduleGrid } from "~/components/schedule/ScheduleGrid";
 import { TourCreationFlow } from "~/components/schedule/TourCreationModal";
 import { useState } from "react";
-import { convertTimeToDateTime } from "~/utils/time";
 
 interface LoaderData {
   tours: Tour[];
