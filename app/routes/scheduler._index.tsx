@@ -72,7 +72,6 @@ export default function SchedulerPage() {
   };
 
   const handleTourCreate = (tourData: any) => {
-    console.log("Creating tour:", tourData);
     // Here you would typically make an API call to create the tour
     setSelectedSlot(null);
   };

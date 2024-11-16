@@ -1,7 +1,7 @@
 import { prisma } from "~/db.server";
 import type { Tour, TourCreate, TourUpdate } from "../types";
-import { dbTourToUiTour, checkTourConflicts, calculateSectionTimes } from "~/utils/tour-utils";
-import type { Prisma } from "@prisma/client";
+import { dbTourToUiTour, checkTourConflicts } from "~/utils/tour-utils";
+import { addMinutes } from "~/utils/time";
 
 export async function getToursByDate(date: Date) {
   const tours = await prisma.tour.findMany({
@@ -91,7 +91,6 @@ export async function updateTour(id: number, data: TourUpdate) {
     where: { id },
     data
   });
-
   return dbTourToUiTour(tour);
 }
 
@@ -106,38 +105,28 @@ export async function updateTourPosition(
   columnPosition: number,
   startTime: string
 ) {
-  // First get the current tour to access its sections
-  const currentTour = await prisma.tour.findUnique({
-    where: { id },
-  });
+  // Calculate new section times based on the new start time
+  const transferStartTime = startTime;
+  const transferEndTime = addMinutes(transferStartTime, 45); // 45 min duration
+  
+  const waterStartTime = transferEndTime;
+  const waterEndTime = addMinutes(waterStartTime, 135); // 135 min duration
+  
+  const shuttleStartTime = waterEndTime;
+  const shuttleEndTime = addMinutes(shuttleStartTime, 120); // 120 min duration
 
-  if (!currentTour) {
-    throw new Error('Tour not found');
-  }
-
-  // Convert DB tour to UI format to access sections
-  const uiTour = dbTourToUiTour(currentTour);
-
-  // Calculate new section times
-  const updatedSections = calculateSectionTimes(startTime, uiTour.sections);
-
-  // Update the tour with new position and all section times
   const tour = await prisma.tour.update({
     where: { id },
     data: {
       columnPosition,
       startTime,
-      // Transfer section
-      transferStartTime: updatedSections.sections.transfer.startTime,
-      transferEndTime: updatedSections.sections.transfer.endTime,
-      
-      // Water section
-      waterStartTime: updatedSections.sections.water.startTime,
-      waterEndTime: updatedSections.sections.water.endTime,
-      
-      // Shuttle section
-      shuttleStartTime: updatedSections.sections.shuttle.startTime,
-      shuttleEndTime: updatedSections.sections.shuttle.endTime,
+      // Update all section times
+      transferStartTime,
+      transferEndTime,
+      waterStartTime,
+      waterEndTime,
+      shuttleStartTime,
+      shuttleEndTime,
     },
   });
 
