@@ -16,7 +16,7 @@ import type { ShipName } from "~/types";
 import type { TourName } from "~/types";
 import type { Tour } from "~/types";
 import { ScheduleGrid } from "~/components/schedule/ScheduleGrid";
-// import { TourCreationModal } from "~/components/schedule/TourCreationModal";
+import { TourCreationFlow } from "~/components/schedule/TourCreationModal";
 import { useState } from "react";
 import { convertTimeToDateTime } from "~/utils/time";
 
@@ -150,6 +150,7 @@ export default function SchedulerPage() {
     date: Date;
     time: string;
   } | null>(null);
+  const parsedDate = new Date(date);
 
   const handleTourUpdate = async (tourId: number, updates: Partial<Tour>) => {
     fetcher.submit(
@@ -177,9 +178,9 @@ export default function SchedulerPage() {
     );
   };
 
-  const handleTourDelete = (tourId: number) => {
+  const handleTourDelete = async (tourId: number): Promise<void> => {
     if (window.confirm("Are you sure you want to delete this tour?")) {
-      fetcher.submit(
+      await fetcher.submit(
         {
           intent: "delete",
           tourId: tourId.toString(),
@@ -203,11 +204,15 @@ export default function SchedulerPage() {
           onTourUpdate={handleTourUpdate}
           onTourDrop={handleTourMove}
           onTourDelete={handleTourDelete}
+          date={parsedDate}
+          onDateChange={function (date: Date): void {
+            throw new Error("Function not implemented.");
+          }}
         />
       </div>
 
-      {/* {selectedSlot && (
-        <TourCreationModal
+      {selectedSlot && (
+        <TourCreationFlow
           date={new Date(date)}
           time={selectedSlot.time}
           open={!!selectedSlot}
@@ -226,8 +231,10 @@ export default function SchedulerPage() {
             );
             setSelectedSlot(null);
           }}
+          employees={[]}
+          vehicles={[]}
         />
-      )} */}
+      )}
     </div>
   );
 }
