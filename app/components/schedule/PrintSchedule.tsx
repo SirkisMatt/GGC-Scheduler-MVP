@@ -6,13 +6,14 @@ import { Button } from "~/components/ui/button";
 interface Tour {
   id: number;
   shipName: string;
-  shipDock: string;
+  shipDock: string | null;
   startTime: string;
   tourName: string;
   columnPosition: number;
   cruisePassengers: number;
   compPassengers: number;
   guide?: string | null;
+  boat?: string | null;
   sections: {
     transfer: {
       driver?: string | null;
@@ -20,7 +21,7 @@ interface Tour {
         startTime: string;
         endTime: string;
       };
-      endLocation: string;
+      endLocation?: string;
       vehicle?: string | null;
     };
     water: {
@@ -29,9 +30,8 @@ interface Tour {
         startTime: string;
         endTime: string;
       };
-      startLocation: string;
-      endLocation: string;
-      boat?: string | null;
+      startLocation?: string | null;
+      endLocation?: string | null;
     };
     shuttle: {
       driver?: string | null;
@@ -39,7 +39,7 @@ interface Tour {
         startTime: string;
         endTime: string;
       };
-      startLocation: string;
+      startLocation?: string;
       vehicle?: string | null;
     };
   };
@@ -120,7 +120,7 @@ const TourSection = ({ tour }: { tour: Tour }) => {
         <div className="list-row">
           <span className="crew-name">{tour.sections.water.captain}</span>
           <span className="role">Captain</span>
-          <span className="vehicle">{tour.sections.water.boat}</span>
+          <span className="vehicle">{tour.boat}</span>
           <span className="timing">
             Lines Off: {tour.sections.water.startLocation}{" "}
             {formatTime(tour.sections.water.timing.startTime)}; RT{" "}

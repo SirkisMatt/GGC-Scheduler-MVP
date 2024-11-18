@@ -156,7 +156,6 @@ export function TourCreationFlow({
   });
 
   const handleInitialSubmit = (values: InitialFormValues) => {
-    console.log("Attempting form submission with values:", values);
     setInitialValues(values);
     setShowDetailedForm(true);
   };

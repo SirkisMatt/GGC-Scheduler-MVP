@@ -1,6 +1,11 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import {
+  useLoaderData,
+  useFetcher,
+  useNavigate,
+  Outlet,
+} from "@remix-run/react";
 import invariant from "tiny-invariant";
 import {
   getToursByDate,
@@ -9,14 +14,14 @@ import {
   deleteTour,
   updateTourPosition,
 } from "~/models/tours.server";
-import { isValidTimeIncrement } from "~/utils/tour-utils";
-import type { DockLocation } from "~/types";
-import type { ShipName } from "~/types";
-import type { TourName } from "~/types";
-import type { Tour } from "~/types";
+import { TourTimingManager } from "~/utils/time-manager";
+import { DockLocation, ShipName, TourName } from "@prisma/client";
+import type { Position, Tour } from "~/types";
 import { ScheduleGrid } from "~/components/schedule/ScheduleGrid";
 import { TourCreationFlow } from "~/components/schedule/TourCreationModal";
 import { useState } from "react";
+import { TourCreate, QuickFormData } from "~/types";
+import { QuickTourModal } from "~/components/schedule/QuickTourModal";
 
 interface LoaderData {
   tours: Tour[];
@@ -44,60 +49,20 @@ export const action: ActionFunction = async ({ request }) => {
   switch (intent) {
     case "create": {
       const data = JSON.parse(formData.get("tour") as string);
-      const tourData = {
+      const tourData: TourCreate = {
         tourName: data.tourName as TourName,
         date: new Date(data.date),
         startTime: data.startTime,
-        guide: data.guide,
-        shipName: data.shipName as ShipName,
-        shipDock: data.shipDock as DockLocation,
-        cruisePassengers: Number(data.cruisePassengers),
-        compPassengers: Number(data.compPassengers),
-        minCapacity: 8, // Default values - adjust as needed
-        maxCapacity: 20,
-        sections: {
-          transfer: {
-            startLocation: data.shipDock as DockLocation,
-            endLocation: data.shipDock as DockLocation,
-            driver: data.transferDriver,
-            vehicle: data.transferVehicle,
-            timing: {
-              startTime: data.startTime, // Adjust as needed
-              endTime: data.startTime, // Adjust as needed
-              duration: 0, // Adjust as needed
-              priority: 0, // Adjust as needed
-            },
-          },
-          water: {
-            startLocation: "Auke Bay",
-            endLocation: "Auke Bay",
-            captain: data.captain,
-            boat: data.boat,
-            timing: {
-              startTime: data.startTime, // Adjust as needed
-              endTime: data.startTime, // Adjust as needed
-              duration: 0, // Adjust as needed
-              priority: 0, // Adjust as needed
-            },
-          },
-          shuttle: {
-            startLocation: "Auke Bay",
-            endLocation: data.shipDock,
-            driver: data.shuttleDriver,
-            vehicle: data.shuttleVehicle,
-            trail: data.shuttleTrail,
-            timing: {
-              startTime: data.startTime, // Adjust as needed
-              endTime: data.startTime, // Adjust as needed
-              duration: 0, // Adjust as needed
-              priority: 0, // Adjust as needed
-            },
-          },
-        },
+        shipName: (data.shipName as ShipName) || null,
+        shipDock: (data.shipDock as DockLocation) || "AJ",
+        cruisePassengers: Number(data.cruisePassengers) || 0,
+        compPassengers: Number(data.compPassengers) || 0,
         columnPosition: Number(data.columnPosition),
+        boat: data.boat || null,
+        // Remove the sections object completely - let server handle it
       };
 
-      if (!isValidTimeIncrement(data.startTime)) {
+      if (!TourTimingManager.isValidTimeIncrement(data.startTime)) {
         return json(
           { error: "Tour start time must be in 15-minute increments" },
           { status: 400 }
@@ -120,7 +85,7 @@ export const action: ActionFunction = async ({ request }) => {
       const columnPosition = Number(formData.get("columnPosition"));
       const startTime = formData.get("startTime") as string;
 
-      if (!isValidTimeIncrement(startTime)) {
+      if (!TourTimingManager.isValidTimeIncrement(startTime)) {
         return json(
           { error: "Tour start time must be in 15-minute increments" },
           { status: 400 }
@@ -143,12 +108,51 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function SchedulerPage() {
   const { tours, date } = useLoaderData<LoaderData>();
+  const navigate = useNavigate();
   const fetcher = useFetcher();
   const [selectedSlot, setSelectedSlot] = useState<{
     date: Date;
-    time: string;
+    startTime: string;
+    coordinates: Position;
+    columnPosition: number;
   } | null>(null);
   const parsedDate = new Date(date);
+  const [showQuickTourModal, setsShowQuickTourModal] = useState(false);
+  const [showDetailedModal, setShowDetailedModal] = useState(false);
+
+  const handleQuickSubmit = (data: QuickFormData) => {
+    // Handle quick form submission
+    fetcher.submit(
+      {
+        intent: "create",
+        tour: JSON.stringify({
+          ...data,
+          date: date,
+          columnPosition: data.columnPosition,
+        }),
+      },
+      { method: "post" }
+    );
+    setSelectedSlot(null);
+  };
+
+  const handleMoreDetails = (
+    data: QuickFormData & { columnPosition: number }
+  ) => {
+    // Navigate to the nested route with query params
+    navigate(
+      `/scheduler/${date}/new?${new URLSearchParams(
+        Object.entries({
+          ...data,
+          columnPosition: data.columnPosition.toString(),
+          time: data.startTime,
+        }).reduce((acc, [key, value]) => {
+          acc[key] = value.toString();
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString()}`
+    );
+  };
 
   const handleTourUpdate = async (tourId: number, updates: Partial<Tour>) => {
     fetcher.submit(
@@ -198,7 +202,15 @@ export default function SchedulerPage() {
             createdAt: new Date(tour.createdAt),
             updatedAt: new Date(tour.updatedAt),
           }))}
-          onSlotClick={setSelectedSlot}
+          selectedSlot={selectedSlot}
+          onSlotClick={(
+            date: Date,
+            startTime: any,
+            coordinates: Position,
+            columnPosition: number
+          ) =>
+            setSelectedSlot({ date, startTime, coordinates, columnPosition })
+          }
           onTourUpdate={handleTourUpdate}
           onTourDrop={handleTourMove}
           onTourDelete={handleTourDelete}
@@ -208,31 +220,20 @@ export default function SchedulerPage() {
           }}
         />
       </div>
-
       {selectedSlot && (
-        <TourCreationFlow
+        <QuickTourModal
+          position={selectedSlot.coordinates}
+          columnPosition={selectedSlot.columnPosition}
           date={new Date(date)}
-          time={selectedSlot.time}
-          open={!!selectedSlot}
-          onOpenChange={() => setSelectedSlot(null)}
-          onSubmit={(data) => {
-            fetcher.submit(
-              {
-                intent: "create",
-                tour: JSON.stringify({
-                  ...data,
-                  date: date,
-                  startTime: selectedSlot.time,
-                }),
-              },
-              { method: "post" }
-            );
-            setSelectedSlot(null);
-          }}
-          employees={[]}
-          vehicles={[]}
+          time={selectedSlot.startTime}
+          tourTypes={Object.values(TourName)}
+          ships={Object.values(ShipName)}
+          onClose={() => setSelectedSlot(null)}
+          onSubmit={handleQuickSubmit}
+          onMoreDetails={handleMoreDetails}
         />
       )}
+      <Outlet /> {/* This will render the nested route modal */}
     </div>
   );
 }

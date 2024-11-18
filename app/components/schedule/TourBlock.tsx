@@ -1,7 +1,7 @@
 import React from "react";
 import { Edit2 } from "lucide-react";
 import type { Tour } from "~/types";
-import { TimeManager } from "~/utils/time-manager";
+import { TourTimingManager } from "~/utils/time-manager";
 import { cn } from "~/lib/utils";
 import {
   Tooltip,
@@ -93,37 +93,9 @@ export default function TourBlock({
   onEdit,
   onDragStart,
 }: TourBlockProps) {
-  // const handleDragStart = (e: React.DragEvent) => {
-  //   try {
-  //     e.dataTransfer.setData("application/json", JSON.stringify(tour));
-  //     const originalRect = e.currentTarget.getBoundingClientRect();
-  //     const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
-
-  //     Object.assign(dragImage.style, {
-  //       width: `${originalRect.width}px`,
-  //       height: `${originalRect.height}px`,
-  //       position: "absolute",
-  //       top: "-1000px",
-  //       left: "-1000px",
-  //       margin: "0",
-  //       transform: "none",
-  //     });
-
-  //     document.body.appendChild(dragImage);
-  //     e.dataTransfer.setDragImage(
-  //       dragImage,
-  //       originalRect.width / 2,
-  //       originalRect.height / 2
-  //     );
-  //     requestAnimationFrame(() => document.body.removeChild(dragImage));
-  //   } catch (error) {
-  //     console.error("Error starting drag:", error);
-  //   }
-  // };
-
   const position = React.useMemo(() => {
     try {
-      const slot = TimeManager.timeToSlot(tour.startTime);
+      const slot = TourTimingManager.timeToSlot(tour.startTime);
       return slot * 15;
     } catch (error) {
       console.error("Invalid time calculation:", error);
@@ -133,13 +105,13 @@ export default function TourBlock({
 
   const durations = React.useMemo(
     () => ({
-      transfer: tour.sections.transfer.timing.duration,
-      water: tour.sections.water.timing.duration,
-      shuttle: tour.sections.shuttle.timing.duration,
+      transfer: tour.sections.transfer.timing.currentDuration,
+      water: tour.sections.water.timing.currentDuration,
+      shuttle: tour.sections.shuttle.timing.currentDuration,
       total:
-        tour.sections.transfer.timing.duration +
-        tour.sections.water.timing.duration +
-        tour.sections.shuttle.timing.duration,
+        tour.sections.transfer.timing.currentDuration +
+        tour.sections.water.timing.currentDuration +
+        tour.sections.shuttle.timing.currentDuration,
     }),
     [tour.sections]
   );
@@ -159,14 +131,10 @@ export default function TourBlock({
         onDragStart={onDragStart}
         style={{
           position: "absolute",
-          top: `${TimeManager.timeToSlot(tour.startTime) * 15}px`,
+          top: `${TourTimingManager.timeToSlot(tour.startTime) * 15}px`,
           left: 0,
           right: 0,
-          height: `${
-            tour.sections.transfer.timing.duration +
-            tour.sections.water.timing.duration +
-            tour.sections.shuttle.timing.duration
-          }px`,
+          height: `${durations.total}px`,
           width: "calc(100% - 16px)",
         }}
         className={cn(
@@ -221,7 +189,7 @@ export default function TourBlock({
           style={{ height: `${durations.water}px` }}
           className={cn(
             "w-full p-2.5 border-b border-slate-200 relative z-20 flex-1",
-            getBoatColor(tour.sections.water.boat)
+            getBoatColor(tour.boat)
           )}
         >
           <div className="flex flex-col h-full">
@@ -265,9 +233,7 @@ export default function TourBlock({
                     tour.sections.water.captain || "Unassigned"
                   }`}
                 />
-                <TruncatedText
-                  text={`Boat: ${tour.sections.water.boat || "Unassigned"}`}
-                />
+                <TruncatedText text={`Boat: ${tour.boat || "Unassigned"}`} />
               </div>
 
               <div className="text-xs">
