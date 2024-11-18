@@ -47,52 +47,6 @@ export function convertTimeToDateTime(time: string, date: Date): Date {
   return dateTime;
 }
 
-export function calculateSectionTimes(startTime: string, sections: Tour['sections']): Tour['sections'] {
-  // Convert start time to minutes since midnight for easier calculation
-  const [hours, minutes] = startTime.split(':').map(Number);
-  let currentTimeInMinutes = hours * 60 + minutes;
-
-  // Transfer section
-  const transferStartTime = startTime;
-  const transferEndTime = formatTime(currentTimeInMinutes + sections.transfer.timing.duration);
-  currentTimeInMinutes += sections.transfer.timing.duration;
-
-  // Water section
-  const waterStartTime = formatTime(currentTimeInMinutes);
-  const waterEndTime = formatTime(currentTimeInMinutes + sections.water.timing.duration);
-  currentTimeInMinutes += sections.water.timing.duration;
-
-  // Shuttle section
-  const shuttleStartTime = formatTime(currentTimeInMinutes);
-  const shuttleEndTime = formatTime(currentTimeInMinutes + sections.shuttle.timing.duration);
-
-  return {
-    transfer: {
-      ...sections.transfer,
-      timing: {
-        ...sections.transfer.timing,
-        startTime: transferStartTime,
-        endTime: transferEndTime,
-      },
-    },
-    water: {
-      ...sections.water,
-      timing: {
-        ...sections.water.timing,
-        startTime: waterStartTime,
-        endTime: waterEndTime,
-      },
-    },
-    shuttle: {
-      ...sections.shuttle,
-      timing: {
-        ...sections.shuttle.timing,
-        startTime: shuttleStartTime,
-        endTime: shuttleEndTime,
-      },
-    },
-  };
-}
 
 export function addMinutes(time: string, minutes: number): string {
   const [hours, mins] = time.split(':').map(Number);

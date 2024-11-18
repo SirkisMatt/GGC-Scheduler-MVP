@@ -1,52 +1,10 @@
-import type { Tour, TourTiming } from "../types/tour";
-
-/**
- * Calculates section times based on tour start time
- */
-export const calculateSectionTimes = (startTime: string, sections: Tour['sections']): TourTiming => {
-  const parsedStart = new Date(`1970-01-01T${startTime}`);
-  
-  const transferStart = new Date(parsedStart);
-  const transferEnd = new Date(transferStart.getTime() + sections.transfer.timing.duration * 60000);
-  
-  const waterStart = new Date(transferEnd);
-  const waterEnd = new Date(waterStart.getTime() + sections.water.timing.duration * 60000);
-  
-  const shuttleStart = new Date(waterEnd);
-  const shuttleEnd = new Date(shuttleStart.getTime() + sections.shuttle.timing.duration * 60000);
-  
-  return {
-    startTime,
-    sections: {
-      transfer: {
-        ...sections.transfer.timing,
-        startTime: formatTime(transferStart),
-        endTime: formatTime(transferEnd),
-      },
-      water: {
-        ...sections.water.timing,
-        startTime: formatTime(waterStart),
-        endTime: formatTime(waterEnd),
-      },
-      shuttle: {
-        ...sections.shuttle.timing,
-        startTime: formatTime(shuttleStart),
-        endTime: formatTime(shuttleEnd),
-      },
-    },
-  };
-};
-
-/**
- * Validates if a time is on a 15-minute increment
- */
-export const isValidTimeIncrement = (time: string): boolean => {
-  const [hours, minutes] = time.split(':').map(Number);
-  return minutes % 15 === 0;
-};
+import type { Tour } from "../types/tour";
+import {TourTimingManager} from "./time-manager";
+import {Tour as DBTour} from "@prisma/client";
 
 
-export const dbTourToUiTour = (dbTour: any): Tour => {
+export const dbTourToUiTour = (dbTour: DBTour): Tour => {
+  
   return {
     id: dbTour.id,
     tourName: dbTour.tourName,
@@ -59,6 +17,7 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
     compPassengers: dbTour.compPassengers,
     minCapacity: dbTour.minCapacity,
     maxCapacity: dbTour.maxCapacity,
+    boat: dbTour.boat,
     sections: {
       transfer: {
         startLocation: dbTour.transferStartLocation,
@@ -66,22 +25,25 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
         driver: dbTour.transferDriver,
         vehicle: dbTour.transferVehicle,
         timing: {
-          duration: dbTour.transferDuration,
+          defaultDuration: dbTour.transferDefaultDuration,
           priority: dbTour.transferPriority,
           startTime: dbTour.transferStartTime,  // Use the actual times from DB
-          endTime: dbTour.transferEndTime,      // instead of calculating
+          endTime: TourTimingManager.calculateSectionEndTime(dbTour.transferStartTime, dbTour.transferDefaultDuration, dbTour.transferDurationChange),
+          durationChange: dbTour.transferDurationChange,
+          currentDuration: TourTimingManager.calculateActualDuration(dbTour.transferDefaultDuration, dbTour.transferDurationChange),    
         },
       },
       water: {
         startLocation: dbTour.waterStartLocation,
         endLocation: dbTour.waterEndLocation,
         captain: dbTour.captain,
-        boat: dbTour.boat,
         timing: {
-          duration: dbTour.waterDuration,
+          defaultDuration: dbTour.waterDefaultDuration,
           priority: dbTour.waterPriority,
           startTime: dbTour.waterStartTime,     // Use the actual times from DB
-          endTime: dbTour.waterEndTime,         // instead of calculating
+          endTime: TourTimingManager.calculateSectionEndTime(dbTour.waterStartTime, dbTour.waterDefaultDuration, dbTour.waterDurationChange),
+          durationChange: dbTour.waterDurationChange,
+          currentDuration: TourTimingManager.calculateActualDuration(dbTour.waterDefaultDuration, dbTour.waterDurationChange),        
         },
       },
       shuttle: {
@@ -91,10 +53,12 @@ export const dbTourToUiTour = (dbTour: any): Tour => {
         vehicle: dbTour.shuttleVehicle,
         trail: dbTour.shuttleTrail,
         timing: {
-          duration: dbTour.shuttleDuration,
+          defaultDuration: dbTour.shuttleDefaultDuration,
           priority: dbTour.shuttlePriority,
           startTime: dbTour.shuttleStartTime,   // Use the actual times from DB
-          endTime: dbTour.shuttleEndTime,       // instead of calculating
+          endTime: TourTimingManager.calculateSectionEndTime(dbTour.shuttleStartTime, dbTour.shuttleDefaultDuration, dbTour.shuttleDurationChange),
+          durationChange: dbTour.shuttleDurationChange,  
+          currentDuration: TourTimingManager.calculateActualDuration(dbTour.shuttleDefaultDuration, dbTour.shuttleDurationChange),
         },
       },
     },
@@ -110,49 +74,3 @@ export const formatTime = (date: Date): string => {
   return date.toTimeString().slice(0, 5);
 };
 
-/**
- * Validates tour timing constraints
- */
-export const validateTourTiming = (tour: Tour): string[] => {
-  const errors: string[] = [];
-  
-  if (!isValidTimeIncrement(tour.startTime)) {
-    errors.push("Tour start time must be in 15-minute increments");
-  }
-
-  // Add additional timing validations as needed
-  
-  return errors;
-};
-
-/**
- * Checks for timing conflicts between tours
- */
-export const checkTourConflicts = (tour: Tour, existingTours: Tour[]): Tour[] => {
-  return existingTours.filter(existingTour => {
-    if (existingTour.id === tour.id) return false;
-    if (existingTour.columnPosition !== tour.columnPosition) return false;
-    
-    // Compare section times
-    const tourTimes = calculateSectionTimes(tour.startTime, tour.sections);
-    const existingTimes = calculateSectionTimes(existingTour.startTime, existingTour.sections);
-    
-    // Check for overlaps in each section
-    for (const section of ['transfer', 'water', 'shuttle'] as const) {
-      const newStart = tourTimes.sections[section].startTime;
-      const newEnd = tourTimes.sections[section].endTime;
-      const existingStart = existingTimes.sections[section].startTime;
-      const existingEnd = existingTimes.sections[section].endTime;
-      
-      if (
-        (newStart >= existingStart && newStart < existingEnd) ||
-        (newEnd > existingStart && newEnd <= existingEnd) ||
-        (newStart <= existingStart && newEnd >= existingEnd)
-      ) {
-        return true;
-      }
-    }
-    
-    return false;
-  });
-};

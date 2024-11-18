@@ -41,7 +41,7 @@ model Tour {
 
   // Ship info
   shipName ShipName @map("ship_name")
-  shipDock DockLocation @map("ship_dock")
+  shipDock DockLocation? @map("ship_dock")
   
   // Passenger info
   cruisePassengers Int @map("cruise_passengers")
@@ -51,9 +51,9 @@ model Tour {
 
   // Transfer section
   transferStartTime      String   @map("transfer_start_time")
-  transferEndTime        String   @map("transfer_end_time")
-  transferDuration      Int      @default(45) @map("transfer_duration")
-  transferStartLocation DockLocation @map("transfer_start_location")
+  transferDefaultDuration Int      @default(45) @map("transfer_default_duration")
+  transferDurationChange Int     @default(0) @map("transfer_duration_change")
+  transferStartLocation DockLocation? @map("transfer_start_location")
   transferEndLocation   String   @default("Auke Bay") @map("transfer_end_location") @db.VarChar(50)
   transferDriver        String?  @map("transfer_driver") @db.VarChar(50)
   transferVehicle       String?  @map("transfer_vehicle") @db.VarChar(50)
@@ -61,8 +61,8 @@ model Tour {
 
   // Water section
   waterStartTime        String   @map("water_start_time")
-  waterEndTime          String   @map("water_end_time")
-  waterDuration        Int      @default(135) @map("water_duration")
+  waterDefaultDuration  Int      @default(135) @map("water_default_duration")
+  waterDurationChange Int     @default(0) @map("water_duration_change")
   waterStartLocation   String   @default("Auke Bay") @map("water_start_location") @db.VarChar(50)
   waterEndLocation     String   @default("Auke Bay") @map("water_end_location") @db.VarChar(50)
   captain             String?  @db.VarChar(50)
@@ -71,8 +71,8 @@ model Tour {
 
   // Shuttle section
   shuttleStartTime      String   @map("shuttle_start_time")
-  shuttleEndTime        String   @map("shuttle_end_time")
-  shuttleDuration      Int      @default(120) @map("shuttle_duration")
+  shuttleDefaultDuration Int      @default(120) @map("shuttle_default_duration")
+  shuttleDurationChange Int     @default(0) @map("shuttle_duration_change")
   shuttleStartLocation String   @default("Auke Bay") @map("shuttle_start_location") @db.VarChar(50)
   shuttleEndLocation   String?  @map("shuttle_end_location") @db.VarChar(50)
   shuttleTrail        Trail    @default(MORAINE_ECOLOGY) @map("shuttle_trail")

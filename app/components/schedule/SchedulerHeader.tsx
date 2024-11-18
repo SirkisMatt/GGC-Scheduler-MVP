@@ -10,7 +10,7 @@ interface SchedulerHeaderProps {
   date: Date;
   onPrevDay: () => void;
   onNextDay: () => void;
-  onAddTour: () => void;
+  // onAddTour: () => void;
   onAddColumn: () => void;
   onDeleteColumn: () => void;
   columnCount?: number;
@@ -21,7 +21,7 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
   tours,
   onPrevDay,
   onNextDay,
-  onAddTour,
+  // onAddTour,
   onAddColumn,
   onDeleteColumn,
   columnCount = 0,
@@ -53,10 +53,10 @@ export const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({
             </div>
 
             {/* Tour and Column Actions */}
-            <Button onClick={onAddTour} className="mr-2">
+            {/* <Button onClick={onAddTour} className="mr-2">
               <Plus className="h-4 w-4 mr-2" />
               New Tour
-            </Button>
+            </Button> */}
             <Button variant="outline" onClick={onAddColumn}>
               <Plus className="h-4 w-4 mr-2" />
               Add Column

@@ -3,13 +3,24 @@ import { addDays, subDays } from "date-fns";
 import { ScheduleColumn } from "./ScheduleColumn";
 import { TimeColumn } from "./TimeColumn";
 import { SchedulerHeader } from "./SchedulerHeader";
-import type { Tour } from "~/types";
+import type { Position, Tour } from "~/types";
 
 interface ScheduleGridProps {
   tours: Tour[];
   date: Date;
   onDateChange: (date: Date) => void;
-  onSlotClick: (slot: { date: Date; time: string }) => void;
+  selectedSlot: {
+    date: Date;
+    startTime: string;
+    coordinates: Position;
+    columnPosition: number;
+  } | null;
+  onSlotClick: (
+    date: Date,
+    startTime: any,
+    coordinates: Position,
+    columnPosition: number
+  ) => void;
   onTourUpdate: (tourId: number, updates: Partial<Tour>) => void;
   onTourDrop: (
     tourId: number,
@@ -22,6 +33,7 @@ interface ScheduleGridProps {
 export function ScheduleGrid({
   tours,
   date,
+  selectedSlot,
   onDateChange,
   onSlotClick,
   onTourUpdate,
@@ -80,7 +92,7 @@ export function ScheduleGrid({
         date={date}
         onPrevDay={() => onDateChange(subDays(date, 1))}
         onNextDay={() => onDateChange(addDays(date, 1))}
-        onAddTour={() => onSlotClick({ date, time: "09:00" })}
+        // onAddTour={() => onSlotClick(date, "09:00")}
         onAddColumn={handleAddColumn}
         onDeleteColumn={handleDeleteColumn}
         columnCount={columns.length}
@@ -101,6 +113,7 @@ export function ScheduleGrid({
                 onTourDrop={onTourDrop}
                 onTourDelete={onTourDelete}
                 onSlotClick={onSlotClick}
+                selectedSlot={selectedSlot}
               />
             ))}
           </div>

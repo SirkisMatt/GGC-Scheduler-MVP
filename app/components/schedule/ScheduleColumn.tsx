@@ -1,20 +1,31 @@
 import React, { useState } from "react";
-import type { Tour } from "~/types";
+import type { Position, Tour } from "~/types";
 import TourBlock from "./TourBlock";
-import { TimeManager } from "~/utils/time-manager";
 import { cn } from "~/lib/utils";
+import { TourPlaceHolder } from "./TourPlaceHolder";
 
 export interface ScheduleColumnProps {
   id: string;
   tours: Tour[];
   index: number;
+  selectedSlot: {
+    date: Date;
+    startTime: string;
+    coordinates: Position;
+    columnPosition: number;
+  } | null;
   onTourDrop: (
     tourId: number,
     newColumnPosition: number,
     newTime: string
   ) => Promise<void>;
   onTourDelete: (tourId: number) => Promise<void>;
-  onSlotClick: (slot: { date: Date; time: string }) => void;
+  onSlotClick: (
+    date: Date,
+    startTime: any,
+    coordinates: Position,
+    columnPosition: number
+  ) => void;
   onEditTour?: (tour: Tour) => void;
 }
 
@@ -22,6 +33,7 @@ export function ScheduleColumn({
   id,
   tours,
   index,
+  selectedSlot,
   onTourDrop,
   onTourDelete,
   onSlotClick,
@@ -137,18 +149,27 @@ export function ScheduleColumn({
 
   const handleClick = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
+    const x = e.clientX - rect.left; // Get the x coordinate
+    const y = e.clientY - rect.top; // Get the y coordinate
     const slot = Math.floor(y / 15);
     const hour = Math.floor(slot / 4) + 7;
     const minute = (slot % 4) * 15;
     const timeString = `${hour.toString().padStart(2, "0")}:${minute
       .toString()
       .padStart(2, "0")}`;
-
-    onSlotClick({
+    const slotClick = {
       date: new Date(),
-      time: timeString,
-    });
+      startTime: timeString,
+      coordinates: { x, y },
+      columnPosition: index,
+    };
+
+    onSlotClick(
+      slotClick.date,
+      slotClick.startTime,
+      slotClick.coordinates,
+      slotClick.columnPosition
+    );
   };
 
   return (
@@ -195,6 +216,26 @@ export function ScheduleColumn({
           onClick={handleClick}
           data-column-id={id}
         >
+          {/* Show placeholder when this column is selected */}
+          {selectedSlot && selectedSlot.columnPosition === index && (
+            <TourPlaceHolder
+              style={{
+                position: "absolute",
+                top: `${
+                  (Math.floor(
+                    (parseInt(selectedSlot.startTime.split(":")[0]) - 7) * 60 +
+                      parseInt(selectedSlot.startTime.split(":")[1])
+                  ) /
+                    15) *
+                  15
+                }px`,
+                left: 0,
+                right: 0,
+                width: "calc(100% - 16px)",
+              }}
+            />
+          )}
+
           {tours.map((tour) => (
             <TourBlock
               key={tour.id}
